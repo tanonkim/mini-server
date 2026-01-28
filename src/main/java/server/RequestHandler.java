@@ -83,6 +83,9 @@ public class RequestHandler {
                 case "GET":
                     userController.getUser(request, response);
                     break;
+                case "POST":
+                    userController.createUser(request, response);
+                    break;
                 default:
                     response.methodNotAllowed()
                             .errorBody("지원하지 않는 HTTP 메서드: " + method);

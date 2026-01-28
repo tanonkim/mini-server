@@ -123,7 +123,7 @@ public class HttpRequest {
     public String getQueryParam(String name) {
         return queryParams.get(name);
     }
-    private String getHeader(String name) {
+    public String getHeader(String name) {
         return headers.get(name); // 무슨 코드인지 다시 확인
     }
 

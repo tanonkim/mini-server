@@ -10,9 +10,9 @@ import java.util.List;
 
 /**
  * 사용자 관련 요청을 처리하는 컨트롤러
- *
+ * <p>
  * Spring의 @RestController + @RequestMapping("/users") 역할을 합니다.
- *
+ * <p>
  * Spring에서:
  * - @GetMapping, @PostMapping으로 라우팅 자동 처리
  * - @RequestParam으로 쿼리 파라미터 자동 바인딩
@@ -24,14 +24,14 @@ public class UserController {
 
     // DB 대신 인메모리 저장
     private final List<UserRequest> users = new ArrayList<>();
-    private final Long idGenerator = 1L;
+    private long idGenerator = 1L;
 
     /**
      * GET /users?name=xxx&age=xx
-     *
+     * <p>
      * Spring:
-     * @GetMapping
-     * public User getUser(@RequestParam String name, @RequestParam Integer age) { ... }
+     *
+     * @GetMapping public User getUser(@RequestParam String name, @RequestParam Integer age) { ... }
      */
 
     public void getUser(HttpRequest request, HttpResponse response) {
@@ -95,4 +95,130 @@ public class UserController {
     }
 
 
+    public void createUser(HttpRequest request, HttpResponse response) {
+        // 1. Content-Type 검사
+        String contentType = request.getHeader("Content-Type");
+        if (contentType == null || !contentType.contains("application/json")) {
+            throw new ValidationException("Content-Type은 application/json이어야 합니다.");
+        }
+
+        // 2. Body에서 JSON 파싱 (Spring + Jackson 역할)
+        String body = request.getBody();
+        if (body == null || body.trim().isEmpty()) {
+            throw new ValidationException("요청 본문이 비어있습니다.");
+        }
+
+        // 간단한 JSON 파싱 (실제로는 Jackson 같은 라이브러리 사용)
+        String name = extractJsonString(body, "name");
+        Integer age = extractJsonInteger(body, "age");
+
+        // 3. 유효성 검사 (추후 서비스 로직 말고 DTO에서 진행)
+        validateCreateUserParams(name, age);
+
+        // 4. 비즈니스 로직 - 사용자 생성
+        UserRequest newUser = new UserRequest(idGenerator++, name, age);
+        users.add(newUser);
+
+        System.out.println("[사용자 생성] " + newUser);
+
+        // 5. 응답 생성 (201 Created)
+        String jsonResponse = String.format(
+                "{\"message\": \"사용자 생성 성공\", \"user\": {\"id\": %d, \"name\": \"%s\", \"age\": %d}}",
+                newUser.getId(), escapeJson(newUser.getName()), newUser.getAge()
+        );
+
+        response.created()
+                .header("Location", "/users/" + newUser.getId())
+                .body(jsonResponse);
+
+    }
+
+
+    private String extractJsonString(String json, String key) {
+        // "key": "value" 패턴 찾기
+        String pattern = "\"" + key + "\"";
+        int keyIndex = json.indexOf(pattern);
+        if (keyIndex == -1) {
+            return null;
+        }
+
+        int colonIndex = json.indexOf(':', keyIndex);
+        if (colonIndex == -1) {
+            return null;
+        }
+
+        int valueStart = json.indexOf('"', colonIndex);
+        if (valueStart == -1) {
+            return null;
+        }
+
+        int valueEnd = json.indexOf('"', valueStart + 1);
+        if (valueEnd == -1) {
+            return null;
+        }
+
+        return json.substring(valueStart + 1, valueEnd);
+
+    }
+
+    private Integer extractJsonInteger(String json, String key) {
+        String pattern = "\"" + key + "\"";
+        int keyIndex = json.indexOf(pattern);
+        if (keyIndex == -1) {
+            return null;
+        }
+
+        int colonIndex = json.indexOf(':', keyIndex);
+        if (colonIndex == -1) {
+            return null;
+        }
+
+        // 숫자 시작점 찾기
+        int valueStart = colonIndex + 1;
+        while (valueStart < json.length() &&
+                (json.charAt(valueStart) == ' ' || json.charAt(valueStart) == '\t')) {
+            valueStart++;
+        }
+
+        // 숫자 끝점 찾기
+        int valueEnd = valueStart;
+        while (valueEnd < json.length() &&
+                (Character.isDigit(json.charAt(valueEnd)) || json.charAt(valueEnd) == '-')) {
+            valueEnd++;
+        }
+
+        if (valueStart == valueEnd) {
+            return null;
+        }
+
+        try {
+            return Integer.parseInt(json.substring(valueStart, valueEnd));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private void validateCreateUserParams(String name, Integer age) {
+        List<String> errors = new ArrayList<>();
+
+        if (name == null || name.isEmpty()) {
+            errors.add("name is required");
+        }
+
+        if (age == null) {
+            errors.add("age is required");
+        }
+
+        if (name != null && name.length() > 50) {
+            errors.add("name " + name + " is too long");
+        }
+
+        if (age != null && (age < 0 || age > 150)) {
+            errors.add("age " + age + " is too long");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException(String.join(", ", errors));
+        }
+    }
 }

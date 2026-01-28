@@ -2,6 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,6 +107,17 @@ public class HttpResponse {
     public HttpResponse methodNotAllowed() {
         this.statusCode = 405;
         this.statusMessage = "Method Not Allowed";
+        return this;
+    }
+
+    public HttpResponse created() {
+        this.statusCode = 201;
+        this.statusMessage = "Created";
+        return this;
+    }
+
+    public HttpResponse header(String name, String value) {
+        this.headers.put(name, value);
         return this;
     }
 }
