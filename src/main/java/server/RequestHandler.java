@@ -78,5 +78,26 @@ public class RequestHandler {
         String path = request.getPath();
         String method = request.getMethod();
 
+        if (path.equals("/users")) {
+            switch (method) {
+                case "GET":
+                    userController.getUser(request, response);
+                    break;
+                default:
+                    response.methodNotAllowed()
+                            .errorBody("지원하지 않는 HTTP 메서드: " + method);
+
+            }
+        } else if (path.equals("/health")) {
+            // 헬스 체크 엔드포인트
+            response.ok().body("{\"status\": \"UP\"}");
+        } else if (path.equals("/")) {
+            // 루트 경로
+            response.ok().body("{\"message\": \"Spring 없는 HTTP 서버입니다!\"}");
+        } else {
+            // 등록되지 않은 경로
+            throw new NotFoundException("존재하지 않는 경로: " + path);
+        }
+
     }
 }

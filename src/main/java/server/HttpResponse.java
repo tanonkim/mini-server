@@ -3,6 +3,7 @@ package server;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HttpResponse {
@@ -11,6 +12,11 @@ public class HttpResponse {
     private String statusMessage;
     private Map<String, String> headers;
     private String body;
+
+    public HttpResponse() {
+        this.headers = new HashMap<>();
+        this.headers.put("Content-Type", "application/json; charset=UTF-8");
+    }
 
 
     public HttpResponse errorBody(String message) {
@@ -82,6 +88,24 @@ public class HttpResponse {
     public HttpResponse internalServerError() {
         this.statusCode = 500;
         this.statusMessage = "Internal Server Error";
+        return this;
+    }
+
+    public HttpResponse ok() {
+        this.statusCode = 200;
+        this.statusMessage = "OK";
+        return this;
+    }
+
+    public HttpResponse body(String body) {
+        this.body = body;
+        return this;
+    }
+
+
+    public HttpResponse methodNotAllowed() {
+        this.statusCode = 405;
+        this.statusMessage = "Method Not Allowed";
         return this;
     }
 }

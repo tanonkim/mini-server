@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class HttpRequest {
 
         // 2. Parse Header
         String headerLine;
-        while ((headerLine = reader.readLine()) != null) {
+        while ((headerLine = reader.readLine()) != null && !headerLine.isEmpty()) {
             request.parseHeader(headerLine);
         }
 
@@ -81,7 +82,11 @@ public class HttpRequest {
             String[] splits = queryString.split("&");
             for (String split : splits) {
                 String[] keyValue = split.split("=");
-                queryParams.put(keyValue[0], keyValue[1]);
+                if (keyValue.length == 2) {
+                    String key = URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8);
+                    String value = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
+                    queryParams.put(key, value);
+                }
             }
 
 
@@ -115,6 +120,9 @@ public class HttpRequest {
         return queryParams;
     }
 
+    public String getQueryParam(String name) {
+        return queryParams.get(name);
+    }
     private String getHeader(String name) {
         return headers.get(name); // 무슨 코드인지 다시 확인
     }
@@ -138,4 +146,5 @@ public class HttpRequest {
                 ", body='" + (body != null ? body.substring(0, Math.min(50, body.length())) + "..." : "null") + '\'' +
                 '}';
     }
+
 }
