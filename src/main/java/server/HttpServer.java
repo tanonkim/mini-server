@@ -11,12 +11,12 @@ public class HttpServer {
     private int port;
     private volatile boolean running = true;
     private final ExecutorService threadPool;
-//    private final RequestHandler requestHandler;
+    private final RequestHandler requestHandler;
 
     public HttpServer(int port, int threadPoolSize) {
         this.port = port;
         this.threadPool = Executors.newFixedThreadPool(threadPoolSize);
-        // todo : requestHandler
+        this.requestHandler = new RequestHandler();
     }
 
     public void start() {
@@ -59,7 +59,7 @@ public class HttpServer {
 
     private void handleClient(Socket clientSocket) {
         try {
-
+            requestHandler.handle(clientSocket);
         }
         catch (Exception e) {
             System.err.println("요청 처리 중 오류: " + e.getMessage());

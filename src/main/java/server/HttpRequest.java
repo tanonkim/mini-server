@@ -47,7 +47,7 @@ public class HttpRequest {
         // 2. Parse Header
         String headerLine;
         while ((headerLine = reader.readLine()) != null) {
-            request.parseRequestLine(headerLine);
+            request.parseHeader(headerLine);
         }
 
         // 3. Parse Body
@@ -88,9 +88,15 @@ public class HttpRequest {
         } else { // 쿼리스트링 부재 /users
             path = pathWithQuery;
         }
-
     }
 
+    private void parseHeader(String headerLine) {
+        int colon = headerLine.indexOf(":");
+
+        String key = headerLine.substring(0, colon).trim();
+        String value = headerLine.substring(colon + 1).trim();
+        headers.put(key, value);
+    }
 
     // Getter
     public String getMethod() {
